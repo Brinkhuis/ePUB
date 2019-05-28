@@ -46,9 +46,9 @@ book_urls = dict()
 
 r = requests.get(base_url + '/kjv.html')
 soup = BeautifulSoup(r.content, 'html.parser')
-for table in soup.find_all('table', {'class': 'tm'}):
-    for td in table.find_all('td'):
-        book_urls[td.text] = base_url + td.a['href']
+for testament in soup.find_all('table', {'class': 'tm'}):
+    for table_data in testament.find_all('td'):
+        book_urls[table_data.text] = base_url + table_data.a['href']
 
 
 # sort book urls
