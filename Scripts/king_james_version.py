@@ -46,7 +46,7 @@ book_urls = dict()
 
 r = requests.get(base_url + '/kjv.html')
 soup = BeautifulSoup(r.content, 'html.parser')
-for table in soup.table.find_all('table', {'class': 'tm'}):
+for table in soup.find_all('table', {'class': 'tm'}):
     for td in table.find_all('td'):
         book_urls[td.text] = base_url + td.a['href']
 
