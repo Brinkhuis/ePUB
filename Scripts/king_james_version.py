@@ -42,25 +42,25 @@ base_url = 'http://www.o-bible.com'
 
 
 # get book urls
-book_urls = dict()
+book_urls_unsorted = list()
 
 r = requests.get(base_url + '/kjv.html')
 soup = BeautifulSoup(r.content, 'html.parser')
 for testament in soup.find_all('table', {'class': 'tm'}):
     for table_data in testament.find_all('td'):
-        book_urls[table_data.text] = base_url + table_data.a['href']
+        book_urls_unsorted.append((table_data.text, base_url + table_data.a['href']))
 
 
 # sort book urls
 book_urls_sorted = dict()
 
-for i in range(3):
+for i in range(0, 0 + 3):
     for j in range(i, 39, 3):
-        book_urls_sorted[list(book_urls.items())[j][0]] = list(book_urls.items())[j][1]
-
+        book_urls_sorted[book_urls_unsorted[j][0]] = book_urls_unsorted[j][1]
+        
 for i in range(39, 39 + 3):
     for j in range(i, 66, 3):
-        book_urls_sorted[list(book_urls.items())[j][0]] = list(book_urls.items())[j][1]
+         book_urls_sorted[book_urls_unsorted[j][0]] = book_urls_unsorted[j][1]
 
 
 # get chapter urls
