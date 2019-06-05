@@ -236,6 +236,8 @@ def create_epub_file(metadata, delete_folder=False):
     file_name = metadata['title'].replace(' ', '_').lower()
     shutil.make_archive(file_name, 'zip', './{}'.format(root))
     os.rename(file_name + '.zip', file_name + '.epub')
+    if not os.path.isdir('Books'):
+        os.mkdir('Books')
     shutil.move(file_name + '.epub', 'Books')
     
     if delete_folder:

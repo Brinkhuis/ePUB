@@ -1,5 +1,6 @@
 # imports
 import epub
+import os
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -20,7 +21,7 @@ epub.create_ebook_folder(folder = metadata['title'])
 
 
 # create cover file
-image_url = 'https://upload.wikimedia.org/wikipedia/commons/a/aa/Statenvertaling_title_page.jpg'
+image_url = 'https://res.cloudinary.com/brinkhuis/image/upload/v1559758092/Statenvertaling_bbqdua.jpg'
 epub.create_coverpage_file(metadata['title'], image_url)
 
 
@@ -37,73 +38,50 @@ for line in lines:
 f.close()
 
 
-# set base url
+# open file with header
+if not os.path.isfile('Data'):
+    os.mkdir('Data')
+f = open('Data/statenvertaling.csv', 'a')
+f.write('|'.join(['book', 'chapter', 'number', 'verse']) +'\n')
+
+
+# scrape and write data
 base_url = 'https://www.statenvertaling.net/'
+testament_urls = [base_url + page for page in ['oude-testament.html', 'nieuwe-testament.html']]
 
-
-# get book urls
-book_urls = dict()
-
-r = requests.get(base_url + 'oude-testament.html')
-soup = BeautifulSoup(r.content, 'html.parser')
-for book in soup.table.find_all('li'):
-    book_urls[book.text] = base_url + book.a['href']
-
-r = requests.get(base_url + 'nieuwe-testament.html')
-soup = BeautifulSoup(r.content, 'html.parser')
-
-for book in soup.table.find_all('a'):
-    book_urls[book.text] = base_url + book['href']
-
-
-# get chapter urls
-chapter_urls = dict()
-
-for key, value in book_urls.items():
-
-    r = requests.get(value)
+for testament_url in testament_urls:
+    r = requests.get(testament_url)
     soup = BeautifulSoup(r.content, 'html.parser')
     
-    boeklijst = soup.find('div', {'id': 'boeklijst'})
-    urls = boeklijst.find_all('a', href=True)
-    
-    chapter = dict()
-    
-    for url in urls:
-                
-        chapter[url.text] = base_url + 'bijbel/' + url['href']
-        chapter_urls[key] = chapter
-
-chapters = pd.DataFrame()
-
-for book_key, book_value in chapter_urls.items():
-    for chapter_key, chapter_value in book_value.items():
-        chapters = chapters.append(pd.Series([book_key, chapter_key, chapter_value]),
-                                   ignore_index=True)
-
-chapters.columns = ['book', 'chapter', 'url']
-
-
-# get bible verses
-bible = pd.DataFrame()
-
-for index, row in tqdm(chapters.iterrows()):
-
-    r = requests.get(row['url'])
-    soup = BeautifulSoup(r.content, 'html.parser')
-    
-    tekst = soup.find('div', {'id': 'tekst'})
-    verses = tekst.find_all('p', id=True)
-    
-    for verse in verses:
-        number_verse = verse.stripped_strings
-        data = pd.Series([row['book'], row['chapter'], next(number_verse), next(number_verse)])
-        bible = bible.append(data, ignore_index=True)
+    for book_url in soup.find('table', {'id': 'inhoud'}).find_all('a', href=True):
+        r = requests.get(base_url + book_url['href'])
+        soup = BeautifulSoup(r.content, 'html.parser')
         
-bible.columns = ['book', 'chapter', 'number', 'verse']
+        for chapter_url in soup.find('div', {'id': 'boeklijst'}).find_all('a', href=True):
+            r = requests.get(base_url + 'bijbel/' + chapter_url['href'])
+            soup = BeautifulSoup(r.content, 'html.parser')
+            
+            book_title = soup.html.body.div.p.find_all('a')[2].text
+            chapter_title = soup.html.head.title.text.split(' - ')[0]
+            verses = soup.find('div', {'id': 'tekst'}).find_all('p', id=True)
+            verse_numbers = [list(verse.stripped_strings)[0] for verse in verses]
+            verse_texts = [list(verse.stripped_strings)[1] for verse in verses]
+            
+            rows = zip([book_title for _ in range(len(verse_numbers))],
+                       [chapter_title for _ in range(len(verse_numbers))],
+                       verse_numbers,
+                       verse_texts)
+            
+            for row in rows:
+                f.write('|'.join([col.strip() for col in row]) + '\n')
+f.close()
 
 
-# rename chapters titles
+# read data
+bible = pd.read_csv('Data/statenvertaling.csv', sep='|')
+
+
+# rename chapters titles (to blanc when there is only one chapter)
 chapter_counts = bible[['book', 'chapter']].drop_duplicates().groupby(by='book').size()
 bible.loc[bible.book.isin(chapter_counts[chapter_counts == 1].index), ['chapter']] = ''
 

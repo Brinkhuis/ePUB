@@ -20,7 +20,7 @@ epub.create_ebook_folder(folder = metadata['title'])
 
 
 # create cover file
-image_url = 'https://upload.wikimedia.org/wikipedia/commons/e/e8/King-James-Version-Bible-first-edition-title-page-1611.png'
+image_url = 'https://res.cloudinary.com/brinkhuis/image/upload/v1559758477/King-James-Version-Bible-first-edition-title-page-1611_grmdgy.png'
 epub.create_coverpage_file(metadata['title'], image_url)
 
 
