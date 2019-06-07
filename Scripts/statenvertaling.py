@@ -26,14 +26,11 @@ epub.create_coverpage_file(metadata['title'], image_url)
 
 # create css file
 f = open(Path(metadata['title']) / 'OEBPS' / 'Styles' / 'styles.css', 'a')
-
 lines = ['h1 {margin-bottom: 0.2em; font-size: 1.8em; font-weight: bold;}',
          'h3 {color: #8B0000; margin-bottom: 0.2em; font-size: 1.2em; font-weight: bold;}',
          '.verseNum{font-size: smaller; font-weight: bold; color: #8B0000;}']
-
 for line in lines:
     f.write(line + '\n')
-
 f.close()
 
 
@@ -85,14 +82,13 @@ bible.loc[bible.book.isin(chapter_counts[chapter_counts == 1].index), ['chapter'
 
 
 # create html files
-root = Path(metadata['title'])
-
+p = Path(metadata['title'])
 chapter_titles = bible['book'].unique()
 
 for i in tqdm(range(len(chapter_titles)), desc='writing chapters'):
 
     file_name = 'chapter_{:04}.html'.format(i + 1)
-    f = open(root / 'OEBPS/Text' / file_name, 'a')
+    f = open(p / 'OEBPS/Text' / file_name, 'a')
     
     # write book title
     lines = ['<?xml version="1.0" encoding="utf-8"?>',
@@ -109,33 +105,24 @@ for i in tqdm(range(len(chapter_titles)), desc='writing chapters'):
     
     # write chapters
     df_book = bible.loc[bible['book'] == chapter_titles[i]]
-    
     for chapter in df_book['chapter'].unique():
-        
         lines = ['    <h3>{}</h3>'.format(chapter),
                  '    <p>']
-        
         for line in lines:
             f.write(line + '\n')
         
         # write verses
         df_chapter = df_book.loc[df_book['chapter'] == chapter]
-        
         for index, row in df_chapter.iterrows():
-            
             lines = ['    <span class="verseNum">{}</span> {}'.format(row['number'], row['verse'])]
-            
             for line in lines:
                 f.write(line + '\n')
-        
         f.write('    </p>' + '\n')
         
     lines = ['</body>',
              '</html>']
-    
     for line in lines:
         f.write(line + '\n')  
-        
     f.close()
 
 
