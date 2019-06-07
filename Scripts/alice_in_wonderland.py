@@ -1,7 +1,6 @@
 # imports
 import epub
 import requests
-import os
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from pathlib import Path
@@ -64,7 +63,7 @@ for i in range(len(ordered_file_list)):
                 f_new.write(line)
     f_new.close()
     f_org.close
-    os.remove(Path(metadata['title']) / 'OEBPS' / 'Text' / ordered_file_list[i])
+    (Path(metadata['title']) / 'OEBPS' / 'Text' / ordered_file_list[i]).unlink()
 
 
 # create cover file

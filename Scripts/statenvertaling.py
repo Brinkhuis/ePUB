@@ -1,6 +1,5 @@
 # imports
 import epub
-import os
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -39,8 +38,7 @@ f.close()
 
 
 # open file with header
-if not os.path.isfile('Data'):
-    os.mkdir('Data')
+Path('Data').mkdir(exist_ok=True)
 f = open('Data/statenvertaling.csv', 'a')
 f.write('|'.join(['book', 'chapter', 'number', 'verse']) +'\n')
 

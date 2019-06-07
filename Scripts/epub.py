@@ -1,5 +1,4 @@
 import requests
-import os
 import shutil
 import datetime
 from bs4 import BeautifulSoup
@@ -34,26 +33,24 @@ def create_ebook_folder(folder):
     https://www.w3.org/AudioVideo/ebook
     """
     
-    root = Path(folder)
+    p = Path(folder)
     
     # create folders
-    Path.mkdir(root)
+    p.mkdir()
 
-    for folder in ['META-INF', 'OEBPS']:
-        Path.mkdir(root / folder)
+    for folder in ['META-INF', 'OEBPS/Images', 'OEBPS/Styles', 'OEBPS/Text']:
+        (p / folder).mkdir(parents=True)
     
-    for subfolder in ['Images', 'Styles', 'Text']:
-        Path.mkdir(root / 'OEBPS' / subfolder)
-
 
 def create_coverpage_file(folder, image_url):
     """
-    For now, the image should be in JPG
+    For now, the image should be in JPG format
     """
     
+    p = Path(folder)
+    
     # create cover page
-    root = Path(folder)
-    f = open(root / 'OEBPS/Text' / 'CoverPage.html', 'a')
+    f = open(p / 'OEBPS/Text/CoverPage.html', 'a')
     
     lines = ['<?xml version="1.0" encoding="utf-8"?>',
              '<html xmlns="http://www.w3.org/1999/xhtml">',
@@ -76,25 +73,21 @@ def create_coverpage_file(folder, image_url):
     
     # download cover image
     r = requests.get(image_url, allow_redirects=True)
-    open(root / 'OEBPS/Images' / 'cover.jpg', 'wb').write(r.content)
-
-
+    open(p / 'OEBPS/Images/cover.jpg', 'wb').write(r.content)
 
 
 def create_epub_file(metadata, delete_folder=False):
     
-    root = Path(metadata['title'])
+    p = Path(metadata['title'])
     
     # create mimetype
-    
-    f = open(root / 'mimetype', 'w')
+    f = open(p / 'mimetype', 'w')
     f.write('application/epub+zip')
     f.close()
     
     
     # create container.xml
-    
-    f = open(root / 'META-INF' / 'container.xml', 'w')
+    f = open(p / 'META-INF/container.xml', 'w')
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">',
              '    <rootfiles>',
@@ -107,8 +100,7 @@ def create_epub_file(metadata, delete_folder=False):
     
     
     # create content.opf 
-    
-    f = open(root / 'OEBPS' / 'content.opf', 'a')
+    f = open(p / 'OEBPS/content.opf', 'a')
     lines = ['<?xml version="1.0" encoding="utf-8"?>',
              '<package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="2.0">',
              '<metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:opf="http://www.idpf.org/2007/opf" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">',
@@ -129,11 +121,11 @@ def create_epub_file(metadata, delete_folder=False):
     
     ordered_titles = list()
     
-    chapter_files = [file for file in os.listdir(root / 'OEBPS/Text') if file.startswith('chapter_')]
+    chapter_files = [f.name for f in list((p / 'OEBPS/Text').glob('chapter_*.html'))]
     chapter_files.sort()
 
     for chapter_file in chapter_files:
-        file_path = root / 'OEBPS/Text' / chapter_file
+        file_path = p / 'OEBPS/Text' / chapter_file
         with open(file_path, 'r') as file:
             data = file.read()
         soup = BeautifulSoup(data, 'html.parser')
@@ -146,7 +138,7 @@ def create_epub_file(metadata, delete_folder=False):
         for line in lines:
             f.write(line + '\n')
     
-    images = [file.name for file in list((root / 'OEBPS' / 'Images').glob('**/*.jpg')) if file.is_file()]
+    images = [f.name for f in list((p / 'OEBPS' / 'Images').glob('*.jpg'))]
     
     for image in images:
         lines = ['    <item href="Images/{}" id="{}" media-type="image/jpeg" />'.format(image, image.replace('.', '_'))]
@@ -179,8 +171,7 @@ def create_epub_file(metadata, delete_folder=False):
     
     
     # create toc.ncx
-    
-    f = open(root / 'OEBPS' / 'toc.ncx', 'a')
+    f = open(p / 'OEBPS' / 'toc.ncx', 'a')
     lines = ['<?xml version="1.0" encoding="utf-8"?>',
              '<ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1">',
              '<head>',
@@ -198,11 +189,11 @@ def create_epub_file(metadata, delete_folder=False):
     
     ordered_titles = list()
     
-    chapter_files = [file for file in os.listdir(root / 'OEBPS/Text') if file.startswith('chapter_')]
+    chapter_files = [f.name for f in list((p / 'OEBPS/Text').glob('chapter_*.html'))]
     chapter_files.sort()
     
     for chapter_file in chapter_files:
-        file_path = root / 'OEBPS/Text' / chapter_file
+        file_path = p / 'OEBPS/Text' / chapter_file
         with open(file_path, 'r') as file:
             data = file.read()
         soup = BeautifulSoup(data, 'html.parser')
@@ -233,12 +224,12 @@ def create_epub_file(metadata, delete_folder=False):
     
     
     # create epub file
+    b = Path('Books')
+    b.mkdir(exist_ok=True)
     file_name = metadata['title'].replace(' ', '_').lower()
-    shutil.make_archive(file_name, 'zip', './{}'.format(root))
-    os.rename(file_name + '.zip', file_name + '.epub')
-    if not os.path.isdir('Books'):
-        os.mkdir('Books')
-    shutil.move(file_name + '.epub', 'Books')
-    
+    shutil.make_archive(b / file_name, 'zip', p)
+    source = b / f'{file_name}.zip'
+    target = b / f'{file_name}.epub'
+    source.rename(target)
     if delete_folder:
-        shutil.rmtree(root)
+        shutil.rmtree(p)
