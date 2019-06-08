@@ -117,4 +117,4 @@ for i in tqdm(range(len(chapter_titles)), desc='writing chapters'):
     f.close()
 
 # create epub file
-epub.create_epub_file(metadata, delete_folder=False)
+epub.create_epub_file(metadata, delete_folder=True)
