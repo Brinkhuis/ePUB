@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 from pathlib import Path
 
-
 # set book metadata
 metadata = epub.set_book_metadata(identifier_id='000-00-000-0000-0',
                                  identifier_opf='000-00-000-0000-0',
@@ -14,15 +13,12 @@ metadata = epub.set_book_metadata(identifier_id='000-00-000-0000-0',
                                  creator='God',
                                  language='nl')
 
-
 # create book folder
 epub.create_ebook_folder(folder = metadata['title'])
-
 
 # create cover file
 image_url = 'https://res.cloudinary.com/brinkhuis/image/upload/v1559758092/Statenvertaling_bbqdua.jpg'
 epub.create_coverpage_file(metadata['title'], image_url)
-
 
 # create css file
 f = open(Path(metadata['title']) / 'OEBPS' / 'Styles' / 'styles.css', 'a')
@@ -33,12 +29,10 @@ for line in lines:
     f.write(line + '\n')
 f.close()
 
-
 # open file with header
 Path('Data').mkdir(exist_ok=True)
-f = open('Data/statenvertaling.csv', 'a')
+f = open('Data/{}.csv'.format(metadata['title'].lower().replace(' ', '_')), 'a')
 f.write('|'.join(['book', 'chapter', 'number', 'verse']) +'\n')
-
 
 # scrape and write data
 base_url = 'https://www.statenvertaling.net/'
@@ -71,15 +65,12 @@ for testament_url in testament_urls:
                 f.write('|'.join([col.strip() for col in row]) + '\n')
 f.close()
 
-
 # read data
-bible = pd.read_csv('Data/statenvertaling.csv', sep='|')
-
+bible = pd.read_csv('Data/{}.csv'.format(metadata['title'].lower().replace(' ', '_')), sep='|')
 
 # rename chapters titles (to blanc when there is only one chapter)
 chapter_counts = bible[['book', 'chapter']].drop_duplicates().groupby(by='book').size()
 bible.loc[bible.book.isin(chapter_counts[chapter_counts == 1].index), ['chapter']] = ''
-
 
 # create html files
 p = Path(metadata['title'])
@@ -125,6 +116,5 @@ for i in tqdm(range(len(chapter_titles)), desc='writing chapters'):
         f.write(line + '\n')  
     f.close()
 
-
 # create epub file
-epub.create_epub_file(metadata, delete_folder=True)
+epub.create_epub_file(metadata, delete_folder=False)
