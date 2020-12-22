@@ -1,9 +1,9 @@
 import epub
-import gzip
 import os
 import pandas as pd
 import re
 import requests
+import shutil
 from bs4 import BeautifulSoup
 from pathlib import Path
 from PIL import Image
@@ -104,3 +104,7 @@ epub.create_toc(info)
 epub.create_css(info)
 epub.create_epub(info)
 epub.delete_dir(info)
+
+
+# delete downloads
+shutil.rmtree(download_dir)
