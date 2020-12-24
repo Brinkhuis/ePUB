@@ -1,0 +1,13 @@
+name: epub
+channels:
+  - defaults
+dependencies:
+  - python=3.8
+  - pandas
+  - tqdm
+  - beautifulsoup4
+  - requests
+  - pillow
+  - pylint
+  - pytest
+prefix: /home/rene/miniconda3/envs/epub
