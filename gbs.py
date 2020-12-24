@@ -19,7 +19,7 @@ info['subject'] = ''
 
 
 # set title color
-info['color'] = '#003366'
+info['color'] = '#0d47a1'
 
 
 # create download directory
@@ -44,25 +44,44 @@ for n in range(1, 67):
     soup = BeautifulSoup(r.content, 'html.parser')
     
     hoofdstukken = soup.find('td', {'class': 'hoofdstukken-lijst'}).find_all('a', href=True)
-    for hoofdstuk in hoofdstukken[:-1]:
+    for hoofdstuk in hoofdstukken:
+        
         
         hfst_request = requests.get(base_url + hoofdstuk['href'])
         hfst_soup = BeautifulSoup(hfst_request.content, 'html.parser')
         
         title_split = hfst_soup.title.text.split(' – ')[0].split()
-        if len(title_split) == 1:
-            book = title_split[0]
-            #chapter = book
-            chapter = '1'
-        elif len(title_split) == 2 and title_split[0].isdigit():
-            book = ' '.join(title_split)
-            chapter = book
-        elif len(title_split) == 2 and title_split[1].isdigit():
-            book = title_split[0]
-            chapter = title_split[1]
-        else:
+        if title_split[0] == 'Inleiding':
+            # Skip chapters like 'Inleiding Bijbelboek' and 'Inleiding Nieuwe Testament'
+            continue
+        elif len(title_split) == 3:
+            # '2 Koningen 3'
+            # book = '2 Koningen'
+            # chapter = 3
             book = ' '.join(title_split[:-1])
             chapter = title_split[-1]
+        elif len(title_split) == 2 and title_split[0].isdigit():
+            # '3 Johannes'
+            # book = '3 Johannes'
+            # chapter = '1'
+            book = ' '.join(title_split)
+            chapter = '1'
+        elif len(title_split) == 2 and title_split[1].isdigit():
+            # 'Psalm 100'
+            # book = 'Psalm'
+            # chapter = '100'
+            book = title_split[0]
+            chapter = title_split[1]
+        elif len(title_split) == 1:
+            # 'Filemon'
+            # book = 'Filemon'
+            # chapter = '1'
+            book = title_split[0]
+            chapter = '1'
+        else:
+            print("Error: Check book and chapter for: '{}'".format(' '.join(title_split)))
+            book = ' '.join(title_split)
+            chapter = ' '.join(title_split)
         
         if book == 'Psalm':
             book = 'Psalmen'

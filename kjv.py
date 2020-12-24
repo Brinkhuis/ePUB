@@ -19,7 +19,7 @@ info['subject'] = ''
 
 
 # set title color
-info['color'] = '#660066'
+info['color'] = '#bf360c'
 
 
 # create download directory
